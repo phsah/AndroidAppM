@@ -79,57 +79,65 @@ public class AddTaskActivity extends BaseActivity {
     }
 
     private void uploadTask(String title, Uri imageUri) {
+    try {
         String mimeType = getContentResolver().getType(imageUri);
         if (mimeType == null) mimeType = "image/jpeg";
 
         RequestBody titlePart =
                 RequestBody.create(title, MultipartBody.FORM);
 
-        MultipartBody.Part imagePart = null;
-        if(imageUri != null) {
-            String imagePath = getImagePath(imageUri);
-            if (imagePath != null) {
-                File file = new File(imagePath);
-                RequestBody requestBody = RequestBody.create(MediaType.parse("multipart/form-data"), file);
-                imagePart = MultipartBody.Part.createFormData("image", file.getName(), requestBody);
-            }
-        }
+        InputStream inputStream =
+                getContentResolver().openInputStream(imageUri);
+
+        byte[] imageBytes = readBytes(inputStream);
+
+        RequestBody imageBody =
+                RequestBody.create(imageBytes, MediaType.parse(mimeType));
+
+        MultipartBody.Part imagePart =
+                MultipartBody.Part.createFormData(
+                        "image",
+                        "image.jpg",
+                        imageBody
+                );
 
         RetrofitClient.getInstance()
                 .getZadachiApi()
                 .create(titlePart, imagePart)
                 .enqueue(new Callback<ZadachaItemDTO>() {
                     @Override
-                    public void onResponse(Call<ZadachaItemDTO> call, Response<ZadachaItemDTO> response) {
-                        if (response.isSuccessful() && response.body() != null) {
+                    public void onResponse(Call<ZadachaItemDTO> call,
+                                           Response<ZadachaItemDTO> response) {
+                        if (response.isSuccessful()) {
                             toast("Задача створена");
-                            goToMain();
-                        } else if (response.isSuccessful() && response.body() == null) {
-                            Log.d("AddTaskActivity", "Response successful but body is null. Code: " + response.code());
-                            toast("Задача створена");
-                            goToMain();
+                            goToMainActivity();
                         } else {
-                            String errorBody = "";
-                            try {
-                                if (response.errorBody() != null) {
-                                    errorBody = response.errorBody().string();
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            Log.e("AddTaskActivity", "Server error: " + response.code() + ", body: " + errorBody);
-                            toast("Помилка сервера: " + response.code());
+                            toast("Server error: " + response.code());
                         }
                     }
 
                     @Override
                     public void onFailure(Call<ZadachaItemDTO> call, Throwable t) {
-                        Log.e("AddTaskActivity", "onFailure type: " + t.getClass().getName());
-                        Log.e("AddTaskActivity", "message: " + t.getMessage(), t);
+                        Log.e("AddTaskActivity", "Upload failed", t);
                         toast("Помилка: " + t.getMessage());
                     }
                 });
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        toast("Помилка читання зображення");
     }
+}
+
+private byte[] readBytes(InputStream inputStream) throws IOException {
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    int nRead;
+    byte[] data = new byte[4096];
+    while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+        buffer.write(data, 0, nRead);
+    }
+    return buffer.toByteArray();
+}
 
 
     private String getImagePath(Uri uri) {

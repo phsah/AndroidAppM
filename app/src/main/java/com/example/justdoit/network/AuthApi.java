@@ -17,4 +17,7 @@ public interface AuthApi {
             @Part("Password") RequestBody password,
             @Part MultipartBody.Part image
     );
+
+    @POST("/auth/login")
+    Call<AuthResponse> login(@Body LoginRequestDTO model);
 }

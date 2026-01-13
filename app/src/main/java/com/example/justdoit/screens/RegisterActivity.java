@@ -138,6 +138,8 @@ public class RegisterActivity extends BaseActivity {
                 passwordInput.getText().toString().trim(),
                 selectedImageUri
         );
+
+        
     }
 
     private void uploadRegister(String fn, String ln, String em, String pw, Uri uri) {
@@ -180,5 +182,9 @@ public class RegisterActivity extends BaseActivity {
                         MyLogger.toast("Помилка: " + t.getMessage());
                     }
                 });
+    }
+
+    public void onBackToLoginClick(View view) {
+        goToLogin();
     }
 }

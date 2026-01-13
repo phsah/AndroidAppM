@@ -19,7 +19,9 @@ public class RetrofitClient {
         OkHttpClient.Builder client =  new  OkHttpClient.Builder()
                 .connectTimeout(20, TimeUnit.SECONDS)
                 .writeTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS);
+                .readTimeout(20, TimeUnit.SECONDS)
+                .addInterceptor(new AuthInterceptor())
+                .addInterceptor(logging);
         retrofit = new Retrofit.Builder()
                 .baseUrl(Config.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
